@@ -23,7 +23,7 @@ $scriptDirectory = (Get-Item .).FullName
 $directory = ($directory = Read-Host "Enter the directory path (leave empty for the current directory: $scriptDirectory)") ? $directory : $scriptDirectory
 
 # Check if the directory exists
-if (-Not Test-Path $directory -PathType Container) {
+if (-Not (Test-Path $directory -PathType Container)) {
     Write-Host "Directory does not exist."
     Return
 }
