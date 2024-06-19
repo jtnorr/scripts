@@ -10,23 +10,39 @@
     For more PowerShell scripts by me, visit: https://github.com/jtnorr/scripts
 #>
 
+# Check if FFmpeg is installed
+if (-not (Test-Path "ffmpeg")) {
+    Write-Host "FFmpeg is not installed. Please install FFmpeg before running this script."
+    Return
+}
+
+# Get current working directory
+$scriptDirectory = (Get-Item .).FullName
+
 # Prompt the user to enter a directory path
 $directory = Read-Host "Enter the directory path"
 
 # Check if the directory exists
-if (Test-Path $directory -PathType Container) {
-    # Prompt the user to enter the video codec
-    $videoCodec = Read-Host "Enter the video codec (e.g., libx264)"
-
-    # Prompt the user to enter the audio codec
-    $audioCodec = Read-Host "Enter the audio codec (e.g., aac)"
-
-    # Prompt the user automatically crop videos
-    $autoCrop = Read-Host "Automatically crop videos? (y/n)"
-} else {
+if (!Test-Path $directory -PathType Container) {
     Write-Host "Directory does not exist."
     Return
 }
+    Write-Host "The following settings are the default, leave the prompts empty if you wish to use them:
+    Video codec: libx264
+    Audio codec: aac
+    Automatically crop videos: yes"
+
+    # Prompt the user to enter the video codec
+    $videoCodec = Read-Host "Enter the video codec (e.g., libx264)"
+    $videoCodec = ($vcodec = Read-Host "Enter the video codec (e.g., libx264)") ? $vcodec : "libx264"
+
+    # Prompt the user to enter the audio codec
+    $audioCodec = Read-Host "Enter the audio codec (e.g., aac)"
+    $audioCodec = ($acodec = Read-Host "Enter the audio codec (e.g., aac)") ? $acodec : "aac"
+
+    # Prompt the user automatically crop videos
+    $autoCrop = Read-Host "Automatically crop videos? (y/n)"
+    $autoCrop = ($crop = Read-Host "Automatically crop videos? (y/n)") ? $crop : "y"
 
 # Get all video files in the directory
 $videoFiles = Get-ChildItem -Path $directory -Filter "*.mp4" -File
