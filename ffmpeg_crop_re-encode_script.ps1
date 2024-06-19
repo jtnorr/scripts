@@ -33,15 +33,12 @@ if (!Test-Path $directory -PathType Container) {
     Automatically crop videos: yes"
 
     # Prompt the user to enter the video codec
-    $videoCodec = Read-Host "Enter the video codec (e.g., libx264)"
     $videoCodec = ($vcodec = Read-Host "Enter the video codec (e.g., libx264)") ? $vcodec : "libx264"
 
     # Prompt the user to enter the audio codec
-    $audioCodec = Read-Host "Enter the audio codec (e.g., aac)"
     $audioCodec = ($acodec = Read-Host "Enter the audio codec (e.g., aac)") ? $acodec : "aac"
 
     # Prompt the user automatically crop videos
-    $autoCrop = Read-Host "Automatically crop videos? (y/n)"
     $autoCrop = ($crop = Read-Host "Automatically crop videos? (y/n)") ? $crop : "y"
 
 # Get all video files in the directory
