@@ -9,6 +9,11 @@ if (Test-Path $directory -PathType Container) {
     # Prompt the user to enter the audio codec
     $audioCodec = Read-Host "Enter the audio codec (e.g., aac):"
 
+    # Prompt the user automatically crop videos
+    $autoCrop = Read-Host "Automatically crop videos? (y/n):"
+
+    
+
     # Get all video files in the directory
     $videoFiles = Get-ChildItem -Path $directory -Filter "*.mp4" -File
 
