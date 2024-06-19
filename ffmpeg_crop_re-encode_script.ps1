@@ -11,7 +11,7 @@
 #>
 
 # Check if FFmpeg is installed
-if (-not (Test-Path "ffmpeg")) {
+if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
     Write-Host "FFmpeg is not installed. Please install FFmpeg before running this script."
     Return
 }
@@ -20,10 +20,10 @@ if (-not (Test-Path "ffmpeg")) {
 $scriptDirectory = (Get-Item .).FullName
 
 # Prompt the user to enter a directory path
-$directory = Read-Host "Enter the directory path"
+$directory = ($directory = Read-Host "Enter the directory path (leave empty for the current directory: $scriptDirectory)") ? $directory : $scriptDirectory
 
 # Check if the directory exists
-if (!Test-Path $directory -PathType Container) {
+if (-Not Test-Path $directory -PathType Container) {
     Write-Host "Directory does not exist."
     Return
 }
