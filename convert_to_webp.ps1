@@ -2,15 +2,20 @@
 # download here: https://developers.google.com/speed/webp/download
 
 Param (
-    [string]$Directory = 'C:\Users\janin\OneDrive\Desktop',
-    [string]$DestinationPath = 'C:\Users\janin\OneDrive\Desktop\converted',
-    [string]$Quality = '75',
-    [string]$Preset
+    [ValidateScript({Test-Path $_ -PathType Container})]
+    [string]$Directory = '.',
+
+    [ValidateScript({Test-Path $_ -PathType Container})]
+    [string]$DestinationPath = '.\Converted',
+
+    [ValidateRange(1, 100)]
+    [int]$Quality = 75,
+
+    [ValidateSet('default', 'photo', 'picture', 'drawing', 'icon', 'text')]
+    [string]$Preset = 'default'
 )
 
-if ([string]::IsNullOrEmpty($Preset)) {
-    $Preset = Read-Host "Enter the Preset type (default, photo, picture, drawing, icon, text)"
-}
+
 
 if (-not (Test-Path $Directory -PathType Container)) {
     Write-Host "Directory not found."
