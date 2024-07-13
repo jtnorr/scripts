@@ -12,7 +12,10 @@
 
 # Check if FFmpeg is installed
 if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
-    Write-Host "FFmpeg is not installed. Please install FFmpeg before running this script."
+    Write-Host "FFmpeg is not installed. Please install FFmpeg before running this script.
+    You can install FFmpeg by visiting https://ffmpeg.org/download.html.
+    On Windows devices you might be able to get the binaries through Winget or Chocolatey.
+    On Linux devices you might be able to get the binaries through your package manager."
     Return
 }
 
@@ -25,12 +28,18 @@ $directory = ($directory = Read-Host "Enter the directory path (leave empty for 
 # Check if the directory exists
 if (-Not (Test-Path $directory -PathType Container)) {
     Write-Host "Directory does not exist."
-    Return
+    if (Read-Host "Do you wish to create the directory? (y/n)" -eq "y") {
+        New-Item -Path $directory -ItemType Directory | Out-Null
+        Write-Host "Directory created at $directory."
+    } else {
+        Return
+    }
 }
     Write-Host "The following settings are the default, leave the prompts empty if you wish to use them:
     Video codec: libx264
     Audio codec: aac
-    Automatically crop videos: yes"
+    Automatically crop videos: yes
+    Normalise audio: yes"
 
     # Prompt the user to enter the video codec
     $videoCodec = ($vcodec = Read-Host "Enter the video codec (e.g., libx264)") ? $vcodec : "libx264"
@@ -40,6 +49,9 @@ if (-Not (Test-Path $directory -PathType Container)) {
 
     # Prompt the user automatically crop videos
     $autoCrop = ($crop = Read-Host "Automatically crop videos? (y/n)") ? $crop : "y"
+
+    #Prompt the user for normalising audio
+    $normaliseAudio = ($normalise = Read-Host "Normalise audio? (y/n)") ? $normalise : "y"
 
 # Get all video files in the directory
 $videoFiles = Get-ChildItem -Path $directory -Filter "*.mp4" -File
