@@ -17,3 +17,16 @@ if (-not (Test-Path $Directory -PathType Container)) {
     Exit
 }
 
+
+if (-not (Test-Path $DestinationPath -PathType Container)) {
+    New-Item -Path $DestinationPath -ItemType Directory | Out-Null
+    Write-Host "Destination directory created at $DestinationPath."
+}
+
+Get-ChildItem -Path $Directory -Include "*.png", "*.jpg" , "*.gif" -File | ForEach-Object {
+    $sourceFile = $_.FullName
+    $destinationFile = Join-Path -Path $DestinationPath -ChildPath ($_.BaseName + '.webp')
+    $args = "-q $Quality -preset $Preset `"$sourceFile`" -o `"$destinationFile`""
+    
+
+}
