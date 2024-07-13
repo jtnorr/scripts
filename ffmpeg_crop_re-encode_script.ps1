@@ -22,39 +22,44 @@ if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
 # Get current working directory
 $scriptDirectory = (Get-Item .).FullName
 
-# Prompt the user to enter a directory path
-$directory = ($directory = Read-Host "Enter the directory path (leave empty for the current directory: $scriptDirectory)") ? $directory : $scriptDirectory
+# Prompt the user to enter a directory path for input and output
+$directory = ($directory = Read-Host "Enter the directory path for input (leave empty for the current directory: $scriptDirectory)") ? $directory : $scriptDirectory
+$OutputDirectory = ($OutputDirectory = Read-Host "Enter the directory path for output (leave empty for the current directory: $scriptDirectory)") ? $OutputDirectory : $scriptDirectory
 
 # Check if the directory exists
-if (-Not (Test-Path $directory -PathType Container)) {
-    Write-Host "Directory does not exist."
-    if (Read-Host "Do you wish to create the directory? (y/n)" -eq "y") {
-        New-Item -Path $directory -ItemType Directory | Out-Null
-        Write-Host "Directory created at $directory."
+if (-Not (Test-Path $OutputDirectory -PathType Container)) {
+    Write-Host "Output directory does not exist."
+    if ((Read-Host "Do you wish to create the directory? (y/n)") -eq "y") {
+        New-Item -Path $OutputDirectory -ItemType Directory | Out-Null
+        Write-Host "Directory created at $OutputDirectory."
     } else {
         Return
     }
 }
-    Write-Host "The following settings are the default, leave the prompts empty if you wish to use them:
-    Video codec: libx264
-    Audio codec: aac
-    Automatically crop videos: yes
-    Normalise audio: yes"
 
-    # Prompt the user to enter the video codec
-    $videoCodec = ($vcodec = Read-Host "Enter the video codec (e.g., libx264)") ? $vcodec : "libx264"
 
-    # Prompt the user to enter the audio codec
-    $audioCodec = ($acodec = Read-Host "Enter the audio codec (e.g., aac)") ? $acodec : "aac"
+Write-Host "The following settings are the default, leave the prompts empty if you wish to use them:
+Video codec: libx264
+Audio codec: aac
+Automatically crop videos: yes
+Normalise audio: yes"
 
-    # Prompt the user automatically crop videos
-    $autoCrop = ($crop = Read-Host "Automatically crop videos? (y/n)") ? $crop : "y"
+# Prompt the user to enter the video codec
+$videoCodec = ($vcodec = Read-Host "Enter the video codec (e.g., libx264)") ? $vcodec : "libx264"
 
-    #Prompt the user for normalising audio
-    $normaliseAudio = ($normalise = Read-Host "Normalise audio? (y/n)") ? $normalise : "y"
+# Prompt the user to enter the audio codec
+$audioCodec = ($acodec = Read-Host "Enter the audio codec (e.g., aac)") ? $acodec : "aac"
+
+# Prompt the user automatically crop videos
+$autoCrop = ($crop = Read-Host "Automatically crop videos? (y/n)") ? $crop : "y"
+
+#Prompt the user for normalising audio
+$normaliseAudio = ($normalise = Read-Host "Normalise audio? (y/n)") ? $normalise : "y"
 
 # Get all video files in the directory
 $videoFiles = Get-ChildItem -Path $directory -Filter "*.mp4" -File
+
+
 
 # Loop through each video file and re-encode using ffmpeg
 foreach ($file in $videoFiles) {
@@ -63,14 +68,28 @@ foreach ($file in $videoFiles) {
         $videoParams = & ffmpeg -i $file.FullName -vf cropdetect -f null - 2>&1 | Select-String -Pattern "crop=[0-9]+:[0-9]+:[0-9]+:[0-9]+" | Select-Object -First 1 | ForEach-Object {
             $_.Matches.Value
         }
-        $outputFile = Join-Path -Path $directory -ChildPath ($file.BaseName + "_cropped_encoded.mp4")
-        ffmpeg -hide_banner -loglevel warning -i $file.FullName -vf $videoParams -c:v $videoCodec -crf 23 -c:a $audioCodec $outputFile
+        $outputFile = Join-Path -Path $OutputDirectory -ChildPath ($file.BaseName + "_cropped_encoded.mp4")
+        $commandLineOperation = "ffmpeg -hide_banner -loglevel warning -i $file.FullName -vf $videoParams -c:v $videoCodec -crf 23 -c:a $audioCodec"
+        if ($normaliseAudio -eq "y") {
+            $commandLineOperation += " -af loudnorm=I=-16:LRA=11:TP=-1.5"
+        }
+        $commandLineOperation += " $outputFile"
+        Invoke-Expression $commandLineOperation
+    
         # Progress bar for cool aesthetics (shouldn't have performance issues)
         Write-Progress -Activity "Cropping and re-encoding videos..." -Status "Processing file $($videoFiles.IndexOf($file) + 1) of $($videoFiles.Count)" -PercentComplete (($videoFiles.IndexOf($file) + 1) / $videoFiles.Count * 100)
+        
     } else {
         # Simple re-encoding without cropping
-        $outputFile = Join-Path -Path $directory -ChildPath ($file.BaseName + "_encoded.mp4")
-        ffmpeg -hide_banner -loglevel warning -i $file.FullName -c:v $videoCodec -crf 23 -c:a $audioCodec $outputFile
+        $outputFile = Join-Path -Path $OutputDirectory -ChildPath ($file.BaseName + "_encoded.mp4")
+        $commandLineOperation = "ffmpeg -hide_banner -loglevel warning -i $file.FullName -c:v $videoCodec -crf 23 -c:a $audioCodec"
+        if ($normaliseAudio -eq "y") {
+            $commandLineOperation += " -af loudnorm=I=-16:LRA=11:TP=-1.5"
+        }
+        $commandLineOperation += " $outputFile"
+        Invoke-Expression $commandLineOperation
+
+        # Progress bar for cool aesthetics (shouldn't have performance issues)
         Write-Progress -Activity "Re-encoding videos..." -Status "Processing file $($videoFiles.IndexOf($file) + 1) of $($videoFiles.Count)" -PercentComplete (($videoFiles.IndexOf($file) + 1) / $videoFiles.Count * 100)
     }
 }
