@@ -65,15 +65,15 @@ $videoFiles = Get-ChildItem -Path $directory -Filter "*.mp4" -File
 foreach ($file in $videoFiles) {
     if ($autoCrop -eq "y") {
         # $videoParams to get parameters of the video for easier handling
-        $videoParams = & ffmpeg -i $file.FullName -vf cropdetect -f null - 2>&1 | Select-String -Pattern "crop=[0-9]+:[0-9]+:[0-9]+:[0-9]+" | Select-Object -First 1 | ForEach-Object {
+        $videoParams = & ffmpeg -i $file.FullName -vf cropdetect -f null - 2>&1 | Select-String -Pattern "crop=[0-9]+:[0-9]+:[0-9]+:[0-9]+" | Select-Object -Last 1 | ForEach-Object {
             $_.Matches.Value
         }
         $outputFile = Join-Path -Path $OutputDirectory -ChildPath ($file.BaseName + "_cropped_encoded.mp4")
-        $commandLineOperation = "ffmpeg -hide_banner -loglevel warning -i $file.FullName -vf $videoParams -c:v $videoCodec -crf 23 -c:a $audioCodec"
+        $commandLineOperation = "ffmpeg -hide_banner -loglevel warning -i", "`"$($file.FullName)`"", "-vf $videoParams -c:v $videoCodec -crf 23 -c:a $audioCodec" -join " "
         if ($normaliseAudio -eq "y") {
             $commandLineOperation += " -af loudnorm=I=-16:LRA=11:TP=-1.5"
         }
-        $commandLineOperation += " $outputFile"
+        $commandLineOperation += " `"$outputFile`""
         Invoke-Expression $commandLineOperation
     
         # Progress bar for cool aesthetics (shouldn't have performance issues)
@@ -82,11 +82,11 @@ foreach ($file in $videoFiles) {
     } else {
         # Simple re-encoding without cropping
         $outputFile = Join-Path -Path $OutputDirectory -ChildPath ($file.BaseName + "_encoded.mp4")
-        $commandLineOperation = "ffmpeg -hide_banner -loglevel warning -i $file.FullName -c:v $videoCodec -crf 23 -c:a $audioCodec"
+        $commandLineOperation = "ffmpeg -hide_banner -loglevel warning -i", "`"$($file.FullName)`"", "-vf $videoParams -c:v $videoCodec -crf 23 -c:a $audioCodec" -join " "
         if ($normaliseAudio -eq "y") {
             $commandLineOperation += " -af loudnorm=I=-16:LRA=11:TP=-1.5"
         }
-        $commandLineOperation += " $outputFile"
+        $commandLineOperation += " `"$outputFile`""
         Invoke-Expression $commandLineOperation
 
         # Progress bar for cool aesthetics (shouldn't have performance issues)
