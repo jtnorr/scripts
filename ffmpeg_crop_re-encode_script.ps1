@@ -29,7 +29,8 @@ $OutputDirectory = ($OutputDirectory = Read-Host "Enter the directory path for o
 # Check if the directory exists
 if (-Not (Test-Path $OutputDirectory -PathType Container)) {
     Write-Host "Output directory does not exist."
-    if ((Read-Host "Do you wish to create the directory? (y/n)") -eq "y") {
+    $createDir = Read-Host "Do you wish to create the directory? (y/n - default: y)"
+    if (($createDir -eq "y" -or $createDir -eq "")) {
         New-Item -Path $OutputDirectory -ItemType Directory | Out-Null
         Write-Host "Directory created at $OutputDirectory."
     } else {
