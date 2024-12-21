@@ -65,6 +65,10 @@ $videoFiles = Get-ChildItem -Path $directory -Filter "*.mp4" -File
 # Loop through each video file and re-encode using ffmpeg
 foreach ($file in $videoFiles) {
     if ($autoCrop -eq "y") {
+        # Progress bar for cool aesthetics (shouldn't have performance issues)
+        Write-Progress -Activity "Cropping and re-encoding videos..." -Status "Processing file $($videoFiles.IndexOf($file) + 1) of $($videoFiles.Count)" -PercentComplete (($videoFiles.IndexOf($file) + 1) / $videoFiles.Count * 100)
+
+
         # $videoParams to get parameters of the video for easier handling
         $videoParams = & ffmpeg -i $file.FullName -vf cropdetect -f null - 2>&1 | Select-String -Pattern "crop=[0-9]+:[0-9]+:[0-9]+:[0-9]+" | Select-Object -Last 1 | ForEach-Object {
             $_.Matches.Value
@@ -77,10 +81,12 @@ foreach ($file in $videoFiles) {
         $commandLineOperation += " `"$outputFile`""
         Invoke-Expression $commandLineOperation
     
-        # Progress bar for cool aesthetics (shouldn't have performance issues)
-        Write-Progress -Activity "Cropping and re-encoding videos..." -Status "Processing file $($videoFiles.IndexOf($file) + 1) of $($videoFiles.Count)" -PercentComplete (($videoFiles.IndexOf($file) + 1) / $videoFiles.Count * 100)
         
     } else {
+        # Progress bar for cool aesthetics (shouldn't have performance issues)
+        Write-Progress -Activity "Re-encoding videos..." -Status "Processing file $($videoFiles.IndexOf($file) + 1) of $($videoFiles.Count)" -PercentComplete (($videoFiles.IndexOf($file) + 1) / $videoFiles.Count * 100)
+        
+        
         # Simple re-encoding without cropping
         $outputFile = Join-Path -Path $OutputDirectory -ChildPath ($file.BaseName + "_encoded.mp4")
         $commandLineOperation = "ffmpeg -hide_banner -loglevel warning -i", "`"$($file.FullName)`"", "-vf $videoParams -c:v $videoCodec -crf 23 -c:a $audioCodec" -join " "
@@ -89,9 +95,7 @@ foreach ($file in $videoFiles) {
         }
         $commandLineOperation += " `"$outputFile`""
         Invoke-Expression $commandLineOperation
-
-        # Progress bar for cool aesthetics (shouldn't have performance issues)
-        Write-Progress -Activity "Re-encoding videos..." -Status "Processing file $($videoFiles.IndexOf($file) + 1) of $($videoFiles.Count)" -PercentComplete (($videoFiles.IndexOf($file) + 1) / $videoFiles.Count * 100)
+        
     }
 }
 
